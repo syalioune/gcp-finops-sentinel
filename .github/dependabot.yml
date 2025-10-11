@@ -1,0 +1,21 @@
+version: 2
+updates:
+  # Keep GitHub Actions up to date
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    # optional: limit number of open PRs at once
+    open-pull-requests-limit: 5
+
+  # Docker images (Dockerfiles)
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+
+  # Python dependencies
+  - package-ecosystem: "pip"
+    directory: "/src"
+    schedule:
+      interval: "weekly"

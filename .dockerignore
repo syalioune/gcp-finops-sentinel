@@ -1,0 +1,66 @@
+# Python
+**/__pycache__/
+**/*.py[cod]
+**/*$py.class
+**/*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+test-results/
+**/*.log
+tests/
+integration-tests/
+test-data/
+
+# IDE
+.vscode/
+.idea/
+**/*.swp
+**/*.swo
+**/*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+.github/
+
+# Documentation - exclude all except what we need
+*.md
+!README.md
+docs/
+
+# Docker
+docker-compose.yml
+.dockerignore
+Dockerfile.test
+
+# Scripts (not needed in production image)
+scripts/
+
+# Pub/Sub emulator config
+pubsub-emulator/
+
+# Terraform/OpenTofu
+*.tf
+*.tfvars
+*.zip
+.terraform/
+.terraformrc
+terraform.tfstate*
+
+# CI/CD
+.circleci/
+.gitlab-ci.yml
+azure-pipelines.yml
+Jenkinsfile

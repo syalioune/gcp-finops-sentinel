@@ -1,0 +1,121 @@
+services:
+  # Configurable GCP Pub/Sub Emulator
+  # https://hub.docker.com/r/thekevjames/gcloud-pubsub-emulator
+  pubsub-emulator:
+    image: thekevjames/gcloud-pubsub-emulator:latest
+    environment:
+      - PUBSUB_EMULATOR_WAIT_TIMEOUT=600
+      - PUBSUBC_CONFIG=/pubsub/gcp-finops-sentinel.json
+    volumes:
+      - ./pubsub-emulator:/pubsub
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8681"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+    ports:
+      - "8681:8681"
+    networks:
+      - budget-function-net
+
+  # MailHog - Email Testing Server
+  # Web UI: http://localhost:8025
+  # SMTP: localhost:1025
+  mailhog:
+    image: mailhog/mailhog:latest
+    ports:
+      - "8025:8025"  # Web UI
+      - "1025:1025"  # SMTP
+    networks:
+      - budget-function-net
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8025"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # GCP FinOps Sentinel
+  budget-function:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - PUBSUB_EMULATOR_HOST=pubsub-emulator:8681
+      - ORGANIZATION_ID=123456789012
+      - RULES_CONFIG_PATH=/test-data/test-rules.json
+      - DRY_RUN=true
+      - LOG_LEVEL=INFO
+      - PYTHONUNBUFFERED=1
+      - ACTION_EVENT_TOPIC=projects/local-gcp-test-project/topics/gcp-finops-sentinel-action
+      # SMTP configuration for MailHog
+      - SMTP_HOST=mailhog
+      - SMTP_PORT=1025
+      - SMTP_USE_TLS=false
+      - SMTP_FROM_EMAIL=finops-sentinel@example.com
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./src:/workspace
+      - ./test-data:/test-data:ro
+    depends_on:
+      pubsub-emulator:
+        condition: service_healthy
+      mailhog:
+        condition: service_healthy
+    networks:
+      - budget-function-net
+    command: functions-framework --target=budget_response_handler --debug
+
+  # Test Runner Service
+  test-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    environment:
+      - PUBSUB_EMULATOR_HOST=pubsub-emulator:8681
+      - ORGANIZATION_ID=123456789012
+      - PYTHONUNBUFFERED=1
+      - PYTHONPATH=/workspace
+    volumes:
+      - ./src:/workspace
+      - ./tests:/tests:ro
+      - ./test-data:/test-data:ro
+      - ./test-results:/test-results
+    networks:
+      - budget-function-net
+    profiles:
+      - test
+    command: pytest /tests -v --cov=/workspace --cov-report=html:/test-results/coverage --cov-report=term
+
+  # Integration Test Service
+  integration-test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    environment:
+      - PUBSUB_EMULATOR_HOST=pubsub-emulator:8681
+      - PUBSUB_PROJECT_ID=local-gcp-test-project
+      - BUDGET_TOPIC=billing-alerts
+      - FUNCTION_URL=http://budget-function:8080
+      - ORGANIZATION_ID=123456789012
+      - PYTHONUNBUFFERED=1
+      - ACTION_EVENT_TOPIC=gcp-finops-sentinel-action
+    volumes:
+      - ./src:/workspace
+      - ./test-data:/test-data:ro
+      - ./integration-tests:/integration-tests
+    depends_on:
+      pubsub-emulator:
+        condition: service_healthy
+      budget-function:
+        condition: service_started
+    networks:
+      - budget-function-net
+    profiles:
+      - integration
+    command: python /integration-tests/run_integration_tests.py
+
+networks:
+  budget-function-net:
+    driver: bridge
