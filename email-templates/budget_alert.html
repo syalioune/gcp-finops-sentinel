@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GCP Budget Alert</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #1a1a1a;
+            background-color: #f5f7fa;
+            padding: 20px;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        .header .subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .alert-banner {
+            background: {% if threshold_percent >= 100 %}linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+            {% elif threshold_percent >= 90 %}linear-gradient(135deg, #ea580c 0%, #f97316 100%);
+            {% else %}linear-gradient(135deg, #0891b2 0%, #06b6d4 100%);{% endif %}
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .alert-banner h2 {
+            font-size: 20px;
+            margin-bottom: 8px;
+        }
+        .alert-banner .threshold {
+            font-size: 36px;
+            font-weight: 700;
+            margin: 10px 0;
+        }
+        .alert-banner .message {
+            font-size: 14px;
+            opacity: 0.95;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1e3a8a;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .metric-card {
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #3b82f6;
+        }
+        .metric-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            color: #6b7280;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+        }
+        .metric-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1a1a1a;
+        }
+        .metric-card.highlight {
+            border-left-color: {% if threshold_percent >= 100 %}#dc2626;{% elif threshold_percent >= 90 %}#ea580c;{% else %}#3b82f6;{% endif %}
+        }
+        .metric-card.highlight .metric-value {
+            color: {% if threshold_percent >= 100 %}#dc2626;{% elif threshold_percent >= 90 %}#ea580c;{% else %}#3b82f6;{% endif %}
+        }
+        .info-list {
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .info-item:last-child {
+            border-bottom: none;
+        }
+        .info-label {
+            font-weight: 600;
+            color: #4b5563;
+        }
+        .info-value {
+            color: #1a1a1a;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        .actions-container {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .action-item {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 6px;
+            border-left: 4px solid #3b82f6;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        .action-type {
+            font-weight: 700;
+            color: #1e3a8a;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+        }
+        .action-target {
+            color: #6b7280;
+            font-size: 13px;
+            margin-bottom: 5px;
+        }
+        .action-details {
+            color: #374151;
+            font-size: 13px;
+            font-style: italic;
+        }
+        .custom-message-box {
+            background: #fef3c7;
+            border: 1px solid #fbbf24;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .custom-message-box h3 {
+            color: #92400e;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        .custom-message-box p {
+            color: #78350f;
+            line-height: 1.6;
+        }
+        .footer {
+            background: #f9fafb;
+            padding: 30px;
+            text-align: center;
+            border-top: 1px solid #e5e7eb;
+        }
+        .footer-text {
+            font-size: 12px;
+            color: #6b7280;
+            line-height: 1.8;
+        }
+        .footer-logo {
+            font-size: 14px;
+            color: #3b82f6;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        @media only screen and (max-width: 600px) {
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+            .email-container {
+                border-radius: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>☁️ GCP Budget Alert</h1>
+            <div class="subtitle">FinOps Sentinel Notification</div>
+        </div>
+
+        <div class="content">
+            <!-- Alert Banner -->
+            <div class="alert-banner">
+                <h2>{% if threshold_percent >= 100 %}🚨 Critical Budget Threshold Exceeded{% elif threshold_percent >= 90 %}⚠️ High Budget Alert{% else %}📊 Budget Notification{% endif %}</h2>
+                <div class="threshold">{{ "%.1f"|format(threshold_percent) }}%</div>
+                <div class="message">of allocated budget has been consumed</div>
+            </div>
+
+            <!-- Budget Metrics -->
+            <div class="section">
+                <h3 class="section-title">Budget Metrics</h3>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-label">Current Cost</div>
+                        <div class="metric-value">${{ "%.2f"|format(cost_amount) }}</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Budget Amount</div>
+                        <div class="metric-value">${{ "%.2f"|format(budget_amount) }}</div>
+                    </div>
+                    <div class="metric-card highlight">
+                        <div class="metric-label">Threshold</div>
+                        <div class="metric-value">{{ "%.1f"|format(threshold_percent) }}%</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Overage</div>
+                        <div class="metric-value">${{ "%.2f"|format(cost_amount - budget_amount) }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Account Details -->
+            <div class="section">
+                <h3 class="section-title">Account Details</h3>
+                <div class="info-list">
+                    <div class="info-item">
+                        <span class="info-label">Billing Account:</span>
+                        <span class="info-value">{{ billing_account_id }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Budget ID:</span>
+                        <span class="info-value">{{ budget_id }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Organization:</span>
+                        <span class="info-value">{{ organization_id }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Custom Message -->
+            {% if custom_message %}
+            <div class="custom-message-box">
+                <h3>💬 Important Notice</h3>
+                <p>{{ custom_message }}</p>
+            </div>
+            {% endif %}
+
+            <!-- Automated Actions -->
+            {% if actions %}
+            <div class="section">
+                <h3 class="section-title">Automated Actions Taken</h3>
+                <div class="actions-container">
+                    <p style="margin-bottom: 15px; color: #1e3a8a; font-weight: 500;">
+                        The following policy enforcement actions have been automatically applied:
+                    </p>
+                    {% for action in actions %}
+                    <div class="action-item">
+                        <div class="action-type">{{ action.type }}</div>
+                        {% if action.resource_id %}
+                        <div class="action-target">
+                            Target: {{ action.resource_type }}/{{ action.resource_id }}
+                        </div>
+                        {% endif %}
+                        {% if action.details %}
+                        <div class="action-details">{{ action.details }}</div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="footer">
+            <div class="footer-logo">GCP FinOps Sentinel</div>
+            <div class="footer-text">
+                This is an automated notification from your GCP budget monitoring system.<br>
+                For questions or to modify alert settings, contact your FinOps team.
+            </div>
+        </div>
+    </div>
+</body>
+</html>

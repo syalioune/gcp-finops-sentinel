@@ -1,0 +1,112 @@
+[
+  {
+    "description": "Successful service restriction - Compute and Container services denied",
+    "event": {
+      "timestamp": 1696888800.123,
+      "action_type": "restrict_services",
+      "project_id": "production-app-456",
+      "success": true,
+      "organization_id": "123456789012",
+      "details": {
+        "constraint": "gcp.restrictServiceUsage",
+        "action": "deny",
+        "services": [
+          "compute.googleapis.com",
+          "container.googleapis.com"
+        ],
+        "error": null
+      }
+    }
+  },
+  {
+    "description": "Successful constraint application - External IP access disabled",
+    "event": {
+      "timestamp": 1696888801.456,
+      "action_type": "apply_constraint",
+      "project_id": "dev-project-789",
+      "success": true,
+      "organization_id": "123456789012",
+      "details": {
+        "constraint": "compute.vmExternalIpAccess",
+        "enforce": true,
+        "values": null,
+        "error": null
+      }
+    }
+  },
+  {
+    "description": "Failed service restriction - API error",
+    "event": {
+      "timestamp": 1696888802.789,
+      "action_type": "restrict_services",
+      "project_id": "test-project-123",
+      "success": false,
+      "organization_id": "123456789012",
+      "details": {
+        "constraint": "gcp.restrictServiceUsage",
+        "action": "deny",
+        "services": [
+          "compute.googleapis.com"
+        ],
+        "error": "Permission denied: Caller does not have required permission"
+      }
+    }
+  },
+  {
+    "description": "List constraint with denied values",
+    "event": {
+      "timestamp": 1696888803.012,
+      "action_type": "apply_constraint",
+      "project_id": "staging-project-321",
+      "success": true,
+      "organization_id": "123456789012",
+      "details": {
+        "constraint": "compute.restrictMachineTypes",
+        "enforce": true,
+        "values": [
+          "n1-standard-8",
+          "n1-standard-16",
+          "n1-highmem-16"
+        ],
+        "error": null
+      }
+    }
+  },
+  {
+    "description": "Multiple services restricted in dev environment",
+    "event": {
+      "timestamp": 1696888804.345,
+      "action_type": "restrict_services",
+      "project_id": "dev-sandbox-555",
+      "success": true,
+      "organization_id": "123456789012",
+      "details": {
+        "constraint": "gcp.restrictServiceUsage",
+        "action": "deny",
+        "services": [
+          "compute.googleapis.com",
+          "container.googleapis.com",
+          "cloudfunctions.googleapis.com",
+          "run.googleapis.com"
+        ],
+        "error": null
+      }
+    }
+  },
+  {
+    "description": "Failed constraint application - Invalid constraint name",
+    "event": {
+      "timestamp": 1696888805.678,
+      "action_type": "apply_constraint",
+      "project_id": "prod-app-999",
+      "success": false,
+      "organization_id": "123456789012",
+      "details": {
+        "constraint": "invalid.constraint",
+        "enforce": true,
+        "values": null,
+        "error": "Constraint not found: invalid.constraint"
+      }
+    }
+  }
+]

@@ -1,0 +1,130 @@
+# GCP FinOps Sentinel - Terraform/OpenTofu Variables Example
+# Copy this file to terraform.tfvars and customize with your values
+# cp terraform.tfvars.example terraform.tfvars
+
+# ==============================================================================
+# REQUIRED VARIABLES
+# ==============================================================================
+
+# GCP Organization ID
+# Find with: gcloud organizations list
+organization_id = "123456789012"
+
+# Project ID where FinOps Sentinel will be deployed
+# Must already exist with billing enabled
+project_id = "my-finops-project"
+
+# Terraform service account email for deployment
+# This account needs permissions to create Cloud Run, IAM, secrets, etc.
+terraform_service_account = "terraform@my-project.iam.gserviceaccount.com"
+
+# Container image URL in Artifact Registry
+# Build and push the image first: docker build -t ... && docker push ...
+# Format: REGION-docker.pkg.dev/PROJECT_ID/REPOSITORY/IMAGE:TAG
+container_image = "us-docker.pkg.dev/my-project/my-repo/gcp-finops-sentinel:v1.0.0"
+
+# Full Pub/Sub topic ID for budget alerts
+# Create budget alert notifications pointing to this topic
+# Format: projects/PROJECT_ID/topics/TOPIC_NAME
+budget_alert_topic_id = "projects/my-project/topics/budget-alerts"
+
+# Email address to receive budget alert notifications and monitoring alerts
+budget_alert_email = "finops-team@example.com"
+
+# ==============================================================================
+# OPTIONAL VARIABLES
+# ==============================================================================
+
+# Deployment region (default: us-central1)
+default_region = "us-central1"
+
+# Enable action events Pub/Sub topic for observability (default: true)
+# Creates a topic to publish all policy actions for auditing
+finops_enable_action_events = true
+
+# Enable dry-run mode (default: true)
+# Set to false to actually apply policies, true to only log actions
+finops_dry_run = true
+
+# ==============================================================================
+# SMTP CONFIGURATION (Optional - Required for send_mail actions)
+# ==============================================================================
+
+# SMTP server hostname
+# Examples:
+#   - Gmail: smtp.gmail.com
+#   - AWS SES: email-smtp.us-east-1.amazonaws.com
+#   - SendGrid: smtp.sendgrid.net
+smtp_host = "smtp.gmail.com"
+
+# SMTP server port (default: 587 for TLS)
+smtp_port = 587
+
+# Enable STARTTLS for SMTP connection (default: "true")
+# Set to "false" for servers like MailHog in development
+smtp_starttls = "true"
+
+# From email address for notifications
+smtp_from_email = "finops-alerts@example.com"
+
+# SMTP authentication username
+# For Gmail: your email address
+# For AWS SES: SMTP credentials username (starts with AKIA...)
+smtp_user = "finops-alerts@example.com"
+
+# SMTP authentication password
+# For Gmail: Use App Password (https://support.google.com/accounts/answer/185833)
+# For AWS SES: SMTP credentials password
+# For SendGrid: Your API key
+# NOTE: This is sensitive - consider using environment variables or Secret Manager
+smtp_password = "your-smtp-password-here" # pragma: allowlist secret
+
+# ==============================================================================
+# RULES CONFIGURATION (Optional - Override default rules)
+# ==============================================================================
+
+# JSON string defining budget enforcement rules
+# See tofu/README.md for complete rule syntax and examples
+# The default rules provide progressive enforcement:
+#   - Uptime check filter (prevents health checks from triggering rules)
+#   - Advisory (50-79%): Email notifications
+#   - Warning (80-89%): Restrict compute/GKE services
+#   - Critical (90-99%): Restrict most cloud services
+#   - Emergency (100%+): Restrict all non-essential services
+
+# Uncomment and customize to override default rules:
+# finops_rules_config = jsonencode({
+#   rules = [
+#     {
+#       name        = "my_custom_rule"
+#       description = "Custom enforcement rule"
+#       conditions = {
+#         threshold_percent = [
+#           { operator = "min", value = 80 }
+#           { operator = "max", value = 89.99 }
+#         ]
+#       }
+#       actions = [
+#         {
+#           type            = "restrict_services"
+#           target_projects = ["my-project-1", "my-project-2"]
+#           services        = ["compute.googleapis.com"]
+#         }
+#       ]
+#     }
+#   ]
+# })
+
+
+# ==============================================================================
+# SECURITY NOTES
+# ==============================================================================
+
+# - Never commit terraform.tfvars to version control (add to .gitignore)
+# - Use environment variables for sensitive values:
+#     export TF_VAR_smtp_password="your-password" # pragma: allowlist secret
+# - Rotate SMTP credentials regularly
+# - Use service account impersonation for Terraform deployments
+# - Review IAM permissions in tofu/README.md before deployment
+# - Enable Cloud Audit Logs for organization policy changes
+# - Test rules in dry-run mode before enabling enforcement

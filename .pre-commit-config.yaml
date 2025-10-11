@@ -1,0 +1,88 @@
+# Pre-commit hooks for GCP FinOps Sentinel
+# Install: pip install pre-commit && pre-commit install
+# Run manually: pre-commit run --all-files
+
+repos:
+  # Conventional Commits validation
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v3.4.0
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+        args: []
+
+  # Python code formatting
+  - repo: https://github.com/psf/black
+    rev: 24.10.0
+    hooks:
+      - id: black
+        language_version: python3.13
+        args: ['--line-length=100']
+        files: ^src/.*\.py$|^tests/.*\.py$|^integration-tests/.*\.py$|^scripts/.*\.py$
+
+  # Import sorting
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        args: ['--profile=black', '--line-length=100']
+        files: ^src/.*\.py$|^tests/.*\.py$|^integration-tests/.*\.py$|^scripts/.*\.py$
+
+  # Python linting
+  - repo: local
+    hooks:
+      - id: pylint
+        name: pylint
+        entry: pylint
+        language: system
+        types: [python]
+        args:
+          [
+            '--max-line-length=100',
+            '--disable=C0114,C0115,C0116',  # Disable docstring requirements for modules, classes, functions
+            '--min-similarity-lines=10',
+            '--good-names=i,j,k,x,y,z,_,id,df,logger',
+            '--score=yes',
+            '--fail-under=8.0'
+          ]
+        files: ^src/.*\.py$|^tests/.*\.py$
+
+  # YAML validation
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-yaml
+        args: ['--unsafe']  # Allow custom tags in docker-compose.yml
+      - id: end-of-file-fixer
+        files: \.(py|sh|yaml|yml|json|md)$
+      - id: trailing-whitespace
+        files: \.(py|sh|yaml|yml|json|md)$
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: check-merge-conflict
+      - id: check-json
+        files: \.json$
+      - id: check-toml
+        files: \.toml$
+
+  # Dockerfile linting
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.12.0
+    hooks:
+      - id: hadolint-docker
+        args: ['--ignore=DL3008', '--ignore=DL3013', '--ignore=DL3059']
+
+  # Secrets detection
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+        exclude: package.lock.json
+
+# Fail fast on first error
+fail_fast: false
+
+# Default language version
+default_language_version:
+  python: python3.13

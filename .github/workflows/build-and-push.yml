@@ -1,0 +1,272 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+env:
+  IMAGE_NAME: gcp-finops-sentinel
+
+permissions:
+  contents: write
+  id-token: write
+  packages: write
+  actions: read
+  security-events: write
+
+jobs:
+  build-and-push:
+    name: Build and Push to Registries
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version-file: '.python-version'
+          cache: 'pip'
+
+      - name: Run tests
+        run: |
+          pip install -r src/requirements.txt
+          pip install -r src/requirements-test.txt
+          PYTHONPATH=src pytest tests/ -v
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@8254fb75a33b976a221574d287e93919e6a36f70 # v2.1.7
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
+
+      - name: Configure Docker for Artifact Registry
+        run: |
+          gcloud auth configure-docker ${{ secrets.GCP_REGION }}-docker.pkg.dev
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@c47758b77c9736f4b2ef4073d4d51994fabfe349 # v3.8.0
+
+      - name: Extract metadata
+        id: meta
+        run: |
+          # Determine version/tag based on trigger
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/}
+            IS_RELEASE=true
+            echo "Building release version: $VERSION"
+          elif [[ "${{ github.ref }}" == refs/heads/main ]]; then
+            VERSION=latest
+            IS_RELEASE=false
+            echo "Building latest from main branch"
+          elif [[ "${{ github.ref }}" == refs/heads/develop ]]; then
+            VERSION=develop
+            IS_RELEASE=false
+            echo "Building develop version"
+          else
+            VERSION=branch-$(echo ${GITHUB_REF#refs/heads/} | sed 's/\//-/g')
+            IS_RELEASE=false
+            echo "Building branch version: $VERSION"
+          fi
+
+          # Extract short SHA
+          SHORT_SHA=${GITHUB_SHA::8}
+
+          # Build timestamp
+          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+
+          # GCP Artifact Registry paths
+          GCP_IMAGE_BASE="${{ secrets.ARTIFACT_REGISTRY_URL }}/${{ env.IMAGE_NAME }}"
+          GCP_IMAGE_VERSION="${GCP_IMAGE_BASE}:${VERSION}"
+          GCP_IMAGE_SHA="${GCP_IMAGE_BASE}:sha-${SHORT_SHA}"
+          GCP_IMAGE_TIMESTAMP="${GCP_IMAGE_BASE}:build-${TIMESTAMP}"
+
+          # Docker Hub paths
+          DOCKERHUB_IMAGE_BASE="${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}"
+          DOCKERHUB_IMAGE_VERSION="${DOCKERHUB_IMAGE_BASE}:${VERSION}"
+          DOCKERHUB_IMAGE_SHA="${DOCKERHUB_IMAGE_BASE}:sha-${SHORT_SHA}"
+          DOCKERHUB_IMAGE_TIMESTAMP="${DOCKERHUB_IMAGE_BASE}:build-${TIMESTAMP}"
+
+          # Export outputs
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "short_sha=${SHORT_SHA}" >> $GITHUB_OUTPUT
+          echo "timestamp=${TIMESTAMP}" >> $GITHUB_OUTPUT
+          echo "is_release=${IS_RELEASE}" >> $GITHUB_OUTPUT
+
+          # GCP outputs
+          echo "gcp_image_version=${GCP_IMAGE_VERSION}" >> $GITHUB_OUTPUT
+          echo "gcp_image_sha=${GCP_IMAGE_SHA}" >> $GITHUB_OUTPUT
+          echo "gcp_image_timestamp=${GCP_IMAGE_TIMESTAMP}" >> $GITHUB_OUTPUT
+          echo "gcp_image_base=${GCP_IMAGE_BASE}" >> $GITHUB_OUTPUT
+
+          # Docker Hub outputs
+          echo "dockerhub_image_version=${DOCKERHUB_IMAGE_VERSION}" >> $GITHUB_OUTPUT
+          echo "dockerhub_image_sha=${DOCKERHUB_IMAGE_SHA}" >> $GITHUB_OUTPUT
+          echo "dockerhub_image_timestamp=${DOCKERHUB_IMAGE_TIMESTAMP}" >> $GITHUB_OUTPUT
+          echo "dockerhub_image_base=${DOCKERHUB_IMAGE_BASE}" >> $GITHUB_OUTPUT
+
+          # Log metadata
+          echo "::notice::Version: ${VERSION}"
+          echo "::notice::GCP Image: ${GCP_IMAGE_VERSION}"
+          echo "::notice::Docker Hub Image: ${DOCKERHUB_IMAGE_VERSION}"
+          echo "::notice::SHA: ${SHORT_SHA}"
+          echo "::notice::Timestamp: ${TIMESTAMP}"
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@48aba3b46d1b1fec4febb7c5d0c644b249a11355 # v5.4.0
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.gcp_image_version }}
+            ${{ steps.meta.outputs.gcp_image_sha }}
+            ${{ steps.meta.outputs.gcp_image_timestamp }}
+            ${{ steps.meta.outputs.dockerhub_image_version }}
+            ${{ steps.meta.outputs.dockerhub_image_sha }}
+            ${{ steps.meta.outputs.dockerhub_image_timestamp }}
+          build-args: |
+            BUILD_DATE=${{ steps.meta.outputs.timestamp }}
+            VCS_REF=${{ steps.meta.outputs.short_sha }}
+            VERSION=${{ steps.meta.outputs.version }}
+          labels: |
+            org.opencontainers.image.created=${{ steps.meta.outputs.timestamp }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.version=${{ steps.meta.outputs.version }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.title=GCP FinOps Sentinel
+            org.opencontainers.image.description=GCP Budget Response Cloud Function with Organization Policy Enforcement
+            org.opencontainers.image.licenses=Apache-2.0
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+
+      - name: Scan image for vulnerabilities
+        continue-on-error: true
+        run: |
+          # Install trivy
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+          echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update
+          sudo apt-get install trivy
+
+          # Pull and scan the GCP image
+          docker pull ${{ steps.meta.outputs.gcp_image_version }}
+          trivy image \
+            --severity HIGH,CRITICAL \
+            --format sarif \
+            --output trivy-results.sarif \
+            ${{ steps.meta.outputs.gcp_image_version }}
+
+      # - name: Upload Trivy results
+      #   uses: github/codeql-action/upload-sarif@3599b3baa15b485a2e49ef411a7a4bb2452e7f93 # v3.30.5
+      #   if: always()
+      #   with:
+      #     sarif_file: trivy-results.sarif
+
+      - name: Create deployment summary
+        run: |
+          echo "### Docker Images Published :rocket:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version**: \`${{ steps.meta.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**SHA**: \`${{ steps.meta.outputs.short_sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Timestamp**: \`${{ steps.meta.outputs.timestamp }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "#### GCP Artifact Registry" >> $GITHUB_STEP_SUMMARY
+          echo "**Registry**: \`${{ secrets.ARTIFACT_REGISTRY_URL }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Tags**:" >> $GITHUB_STEP_SUMMARY
+          echo "- \`${{ steps.meta.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`sha-${{ steps.meta.outputs.short_sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`build-${{ steps.meta.outputs.timestamp }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Pull Command**:" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ${{ steps.meta.outputs.gcp_image_version }}" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "#### Docker Hub" >> $GITHUB_STEP_SUMMARY
+          echo "**Repository**: \`${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Tags**:" >> $GITHUB_STEP_SUMMARY
+          echo "- \`${{ steps.meta.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`sha-${{ steps.meta.outputs.short_sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- \`build-${{ steps.meta.outputs.timestamp }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Pull Command**:" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ${{ steps.meta.outputs.dockerhub_image_version }}" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "#### Deploy to Cloud Function" >> $GITHUB_STEP_SUMMARY
+          echo "Update your OpenTofu/Terraform configuration:" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`hcl" >> $GITHUB_STEP_SUMMARY
+          echo "container_image_uri = \"${{ steps.meta.outputs.gcp_image_version }}\"" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@9d7c94cfd0a1f3ed45544c887983e9fa900f0564 # v1.0.0
+        with:
+          generate_release_notes: true
+          body: |
+            ## Docker Images
+
+            ### GCP Artifact Registry
+
+            **Image**: `${{ steps.meta.outputs.gcp_image_version }}`
+
+            ```bash
+            docker pull ${{ steps.meta.outputs.gcp_image_version }}
+            ```
+
+            ### Docker Hub
+
+            **Image**: `${{ steps.meta.outputs.dockerhub_image_version }}`
+
+            ```bash
+            docker pull ${{ steps.meta.outputs.dockerhub_image_version }}
+            ```
+
+            ### Deploy to Cloud Function
+
+            Update your Terraform/OpenTofu configuration:
+
+            ```hcl
+            module "budget_response_function" {
+              source = "./modules/budget-response-function"
+
+              container_image_uri = "${{ steps.meta.outputs.gcp_image_version }}"
+              # ... other configuration
+            }
+            ```
+
+            Then apply:
+
+            ```bash
+            tofu apply
+            ```
+
+            ### Changes
+
+            See the full changelog below.

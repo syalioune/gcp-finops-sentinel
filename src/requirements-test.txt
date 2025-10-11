@@ -1,0 +1,14 @@
+# Test dependencies - pinned for reproducibility
+# Last updated: 2025-01-12 for Python 3.13
+
+pytest==8.3.4
+pytest-cov==6.0.0
+pytest-mock==3.14.0
+coverage==7.6.10
+requests==2.32.3
+
+# Code quality and pre-commit hooks
+pre-commit==4.0.1
+black==24.10.0
+isort==5.13.2
+pylint==3.3.2

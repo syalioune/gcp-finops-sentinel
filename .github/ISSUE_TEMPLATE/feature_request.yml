@@ -1,0 +1,139 @@
+name: Feature Request
+description: Suggest a new feature or enhancement for GCP FinOps Sentinel
+title: "[Feature]: "
+labels: ["enhancement", "triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a feature! We appreciate your input to make GCP FinOps Sentinel better.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: Is your feature request related to a problem? Please describe.
+      placeholder: "I'm always frustrated when..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: Describe the solution you'd like to see
+      placeholder: Describe your proposed solution...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: feature-area
+    attributes:
+      label: Feature Area
+      description: Which area of the project does this feature relate to?
+      options:
+        - Rule Engine (conditions, operators, filtering)
+        - Policy Enforcement (restrictions, constraints)
+        - Email Notifications (templates, SMTP)
+        - Project Discovery (labels, targeting)
+        - Observability (events, logging, monitoring)
+        - Configuration (rules format, validation)
+        - Deployment (Terraform/OpenTofu, Docker)
+        - Documentation
+        - Testing
+        - Other (please specify in additional context)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How important is this feature to you?
+      options:
+        - Critical (blocking my use case)
+        - High (would significantly improve my workflow)
+        - Medium (nice to have)
+        - Low (minor improvement)
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Have you considered any alternative solutions or workarounds?
+      placeholder: Describe alternatives you've considered...
+
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use Case
+      description: Describe your specific use case for this feature
+      placeholder: |
+        Example:
+        - I manage 50+ projects across multiple environments
+        - I need to apply different policies based on time of day
+        - I want to integrate with my ticketing system
+    validations:
+      required: true
+
+  - type: textarea
+    id: examples
+    attributes:
+      label: Example Configuration
+      description: If applicable, show an example of how you'd like to configure this feature
+      render: json
+      placeholder: |
+        {
+          "rules": [
+            {
+              "name": "my_new_feature",
+              "conditions": { ... },
+              "actions": [ ... ]
+            }
+          ]
+        }
+
+  - type: dropdown
+    id: breaking-change
+    attributes:
+      label: Breaking Change
+      description: Would this feature require breaking changes to existing configurations?
+      options:
+        - "No - backward compatible"
+        - "Yes - would break existing configs"
+        - "Maybe - depends on implementation"
+        - "Not sure"
+    validations:
+      required: true
+
+  - type: textarea
+    id: implementation
+    attributes:
+      label: Implementation Ideas
+      description: If you have ideas about how to implement this, please share them
+      placeholder: Optional - share your implementation ideas...
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Add any other context, screenshots, or examples about the feature request
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      description: Please confirm the following
+      options:
+        - label: I have searched existing issues and discussions to avoid duplicates
+          required: true
+        - label: This feature aligns with the project's goals (GCP budget enforcement via policies)
+          required: true
+        - label: I am willing to help test this feature if implemented
+          required: false
+        - label: I am willing to submit a PR for this feature
+          required: false

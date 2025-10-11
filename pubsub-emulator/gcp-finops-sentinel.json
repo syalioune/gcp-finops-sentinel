@@ -1,0 +1,26 @@
+[
+  {
+    "topic": "billing-alerts",
+    "project": "local-gcp-test-project",
+    "subscriptions": [
+      {
+        "name": "cloud-function-trigger-sub",
+        "push_config": {
+           "push_endpoint": "http://budget-function:8080"
+        }
+      }
+    ]
+  },
+  {
+    "topic": "gcp-finops-sentinel-action",
+    "project": "local-gcp-test-project",
+    "subscriptions": [
+      {
+        "name": "integration-tests-assertion-sub"
+      },
+      {
+        "name": "policy-action-events-sub"
+      }
+    ]
+  }
+]

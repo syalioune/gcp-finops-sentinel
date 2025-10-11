@@ -1,0 +1,166 @@
+rules:
+  - name: test_critical_threshold
+    description: Test rule for critical budget threshold
+    conditions:
+      threshold_percent:
+        operator: ">="
+        value: 100
+    actions:
+      - type: restrict_services
+        target_projects:
+          - test-project-critical
+          - test-project-multi
+        services:
+          - compute.googleapis.com
+          - container.googleapis.com
+      - type: log_only
+        target_projects:
+          - test-project-critical
+          - test-project-multi
+        message: "TEST: Critical budget threshold reached - compute services restricted"
+
+  - name: test_high_threshold
+    description: Test rule for high budget threshold
+    conditions:
+      threshold_percent:
+        operator: ">="
+        value: 90
+    actions:
+      - type: apply_constraint
+        target_projects:
+          - test-project-high
+          - test-project-multi
+        constraint: compute.vmExternalIpAccess
+        enforce: true
+      - type: log_only
+        target_projects:
+          - test-project-high
+          - test-project-multi
+        message: "TEST: High budget threshold - external IPs disabled"
+
+  - name: test_warning_threshold
+    description: Test rule for warning budget threshold
+    conditions:
+      threshold_percent:
+        operator: ">="
+        value: 80
+    actions:
+      - type: log_only
+        target_projects:
+          - test-project-warning
+        message: "TEST: Warning budget threshold reached"
+
+  - name: test_billing_account_filter
+    description: Test rule with billing account filter
+    conditions:
+      threshold_percent:
+        operator: ">="
+        value: 75
+      billing_account_filter: "012345-6789AB-CDEF01"
+    actions:
+      - type: restrict_services
+        target_projects:
+          - dev-project-123
+          - dev-project-456
+        services:
+          - compute.googleapis.com
+      - type: log_only
+        target_projects:
+          - dev-project-123
+          - dev-project-456
+        message: "TEST: Billing account budget control activated"
+
+  - name: test_budget_id_filter
+    description: Test rule with budget ID filter (UUID format)
+    conditions:
+      threshold_percent:
+        operator: ">="
+        value: 85
+      budget_id_filter: a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d
+    actions:
+      - type: apply_constraint
+        target_projects:
+          - prod-project-1
+          - prod-project-2
+        constraint: compute.vmExternalIpAccess
+        enforce: true
+
+  - name: test_folder_targeting
+    description: Test rule applying policy to a folder
+    conditions:
+      threshold_percent:
+        operator: ">="
+        value: 95
+    actions:
+      - type: restrict_services
+        target_folders:
+          - "123456789"
+          - "987654321"
+        services:
+          - compute.googleapis.com
+          - storage.googleapis.com
+
+  - name: test_organization_targeting
+    description: Test rule applying policy to entire organization
+    conditions:
+      threshold_percent:
+        operator: ">="
+        value: 100
+    actions:
+      - type: apply_constraint
+        target_organization: "123456789012"
+        constraint: compute.vmExternalIpAccess
+        enforce: true
+
+  - name: test_label_based_targeting
+    description: Test rule using label-based project discovery
+    conditions:
+      threshold_percent:
+        operator: ">="
+        value: 90
+    actions:
+      - type: restrict_services
+        target_labels:
+          env: prod
+          cost-center: engineering
+        services:
+          - compute.googleapis.com
+
+  - name: test_integration_email_notification
+    description: Integration test for standalone email notification
+    conditions:
+      threshold_percent:
+        operator: ">="
+        value: 110
+    actions:
+      - type: send_mail
+        to_emails:
+          - finops-alerts@example.com
+          - budget-admin@example.com
+        template: budget_alert
+        custom_message: "Critical email notification test"
+
+  - name: test_integration_email_with_actions
+    description: Integration test for email notification with prior actions
+    conditions:
+      threshold_percent:
+        operator: ">="
+        value: 115
+    actions:
+      - type: restrict_services
+        target_projects:
+          - email-test-project-1
+          - email-test-project-2
+        services:
+          - compute.googleapis.com
+          - storage.googleapis.com
+      - type: apply_constraint
+        target_projects:
+          - email-test-project-1
+        constraint: compute.vmExternalIpAccess
+        enforce: true
+      - type: send_mail
+        to_emails:
+          - critical-alerts@example.com
+        template: budget_alert
+        custom_message: "Budget critically exceeded with enforcement actions applied"

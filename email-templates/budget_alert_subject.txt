@@ -1,0 +1,1 @@
+{% if threshold_percent >= 100 %}🚨 CRITICAL{% elif threshold_percent >= 90 %}⚠️ HIGH{% else %}📊{% endif %} GCP Budget Alert: {{ "%.1f"|format(threshold_percent) }}% - {{ billing_account_id }}
