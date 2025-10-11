@@ -1,0 +1,112 @@
+name: Question or Help
+description: Ask a question or request help with GCP FinOps Sentinel
+title: "[Question]: "
+labels: ["question", "help wanted"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have a question? We're here to help! Please provide as much detail as possible.
+
+        **Before asking**: Please check the documentation first:
+        - [README.md](https://github.com/syalioune/gcp-finops-sentinel/blob/main/README.md)
+        - [CLAUDE.md](https://github.com/syalioune/gcp-finops-sentinel/blob/main/CLAUDE.md)
+        - [Local Development Guide](https://github.com/syalioune/gcp-finops-sentinel/blob/main/docs/LOCAL_DEVELOPMENT.md)
+        - [OpenTofu Deployment Guide](https://github.com/syalioune/gcp-finops-sentinel/blob/main/docs/TOFU_DEPLOYMENT.md)
+        - [IAM Permissions Guide](https://github.com/syalioune/gcp-finops-sentinel/blob/main/docs/IAM_PERMISSIONS.md)
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your Question
+      description: What would you like to know?
+      placeholder: Ask your question here...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Question Category
+      description: What is your question about?
+      options:
+        - Getting Started / Installation
+        - Configuration (rules, environment variables)
+        - Deployment (Cloud Run, Docker, OpenTofu/Terraform)
+        - IAM Permissions / Security
+        - Rule Engine / Conditions
+        - Policy Enforcement / Actions
+        - Email Notifications
+        - Project Discovery / Label Targeting
+        - Troubleshooting / Debugging
+        - Best Practices
+        - Integration with other tools
+        - Other (please specify below)
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Provide context to help us understand your situation
+      placeholder: |
+        Example:
+        - What are you trying to accomplish?
+        - What have you tried so far?
+        - What documentation have you already reviewed?
+
+  - type: textarea
+    id: configuration
+    attributes:
+      label: Current Configuration
+      description: If relevant, share your current configuration. **Remove sensitive data!**
+      render: yaml
+      placeholder: |
+        # Example rules configuration
+        rules:
+          - name: my_rule
+            conditions:
+              threshold_percent:
+                operator: ">="
+                value: 80
+
+  - type: textarea
+    id: error-messages
+    attributes:
+      label: Error Messages or Logs
+      description: If you're experiencing issues, include relevant error messages or logs. **Remove sensitive data!**
+      render: shell
+      placeholder: Paste error messages or logs here...
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Environment
+      description: Where are you running GCP FinOps Sentinel?
+      options:
+        - Cloud Run (production)
+        - Local Docker Compose
+        - Planning deployment (pre-deployment questions)
+        - Other (please specify in context)
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Any additional information that might help us answer your question
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      description: Please confirm the following
+      options:
+        - label: I have searched existing issues and discussions
+          required: true
+        - label: I have reviewed the relevant documentation
+          required: true
+        - label: I have removed all sensitive data from my question
+          required: true

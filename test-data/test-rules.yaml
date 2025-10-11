@@ -1,0 +1,166 @@
+rules:
+  - name: test_billing_account_filter
+    description: Test rule with billing account filter (75-79%)
+    conditions:
+      threshold_percent:
+        - operator: min
+          value: 75
+        - operator: max
+          value: 79.99
+      billing_account_filter: 012345-6789AB-CDEF01
+    actions:
+      - type: restrict_services
+        target_projects:
+          - dev-project-123
+        services:
+          - compute.googleapis.com
+      - type: log_only
+        target_projects:
+          - dev-project-123
+        message: 'TEST: Billing account budget control activated'
+  - name: test_warning_threshold
+    description: Test rule for warning budget threshold (80-84%)
+    conditions:
+      threshold_percent:
+        - operator: min
+          value: 80
+        - operator: max
+          value: 84.99
+    actions:
+      - type: log_only
+        target_projects:
+          - test-project-warning
+        message: 'TEST: Warning budget threshold reached'
+  - name: test_budget_id_filter
+    description: Test rule with budget ID filter (85-89%)
+    conditions:
+      threshold_percent:
+        - operator: min
+          value: 85
+        - operator: max
+          value: 89.99
+      budget_id_filter: a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d
+    actions:
+      - type: apply_constraint
+        target_projects:
+          - prod-project-budget-id
+        constraint: compute.vmExternalIpAccess
+        enforce: true
+  - name: test_high_threshold
+    description: Test rule for high budget threshold (90-94%)
+    conditions:
+      threshold_percent:
+        - operator: min
+          value: 90
+        - operator: max
+          value: 94.99
+    actions:
+      - type: apply_constraint
+        target_projects:
+          - test-project-high
+        constraint: compute.vmExternalIpAccess
+        enforce: true
+      - type: log_only
+        target_projects:
+          - test-project-high
+        message: 'TEST: High budget threshold - external IPs disabled'
+  - name: test_label_based_targeting
+    description: Test rule using label-based project discovery (90-94%)
+    conditions:
+      threshold_percent:
+        - operator: min
+          value: 90
+        - operator: max
+          value: 94.99
+    actions:
+      - type: restrict_services
+        target_labels:
+          env: prod
+          cost-center: engineering
+        services:
+          - compute.googleapis.com
+  - name: test_folder_targeting
+    description: Test rule applying policy to a folder (95-99%)
+    conditions:
+      threshold_percent:
+        - operator: min
+          value: 95
+        - operator: max
+          value: 99.99
+    actions:
+      - type: restrict_services
+        target_folders:
+          - '123456789'
+        services:
+          - compute.googleapis.com
+          - storage.googleapis.com
+  - name: test_critical_threshold
+    description: Test rule for critical budget threshold (100-104%)
+    conditions:
+      threshold_percent:
+        - operator: min
+          value: 100
+        - operator: max
+          value: 104.99
+    actions:
+      - type: restrict_services
+        target_projects:
+          - test-project-critical
+        services:
+          - compute.googleapis.com
+          - container.googleapis.com
+      - type: log_only
+        target_projects:
+          - test-project-critical
+        message: 'TEST: Critical budget threshold reached - compute services restricted'
+  - name: test_organization_targeting
+    description: Test rule applying policy to entire organization (105-109%)
+    conditions:
+      threshold_percent:
+        - operator: min
+          value: 105
+        - operator: max
+          value: 109.99
+    actions:
+      - type: apply_constraint
+        target_organization: '123456789012'
+        constraint: compute.vmExternalIpAccess
+        enforce: true
+  - name: test_integration_email_notification
+    description: Integration test for standalone email notification (110-114%)
+    conditions:
+      threshold_percent:
+        - operator: min
+          value: 110
+        - operator: max
+          value: 114.99
+    actions:
+      - type: send_mail
+        to_emails:
+          - finops-alerts@example.com
+          - budget-admin@example.com
+        template: budget_alert
+        custom_message: Critical email notification test
+  - name: test_integration_email_with_actions
+    description: Integration test for email notification with prior actions (115%+)
+    conditions:
+      threshold_percent:
+        operator: min
+        value: 115
+    actions:
+      - type: restrict_services
+        target_projects:
+          - email-test-project-1
+        services:
+          - compute.googleapis.com
+          - storage.googleapis.com
+      - type: apply_constraint
+        target_projects:
+          - email-test-project-1
+        constraint: compute.vmExternalIpAccess
+        enforce: true
+      - type: send_mail
+        to_emails:
+          - critical-alerts@example.com
+        template: budget_alert
+        custom_message: Budget critically exceeded with enforcement actions applied

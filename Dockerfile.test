@@ -1,0 +1,31 @@
+FROM python:3.13-slim
+
+# Set working directory
+WORKDIR /workspace
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends  \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements files
+COPY src/requirements.txt .
+COPY src/requirements-test.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements-test.txt
+
+# Copy source code modules
+COPY src/*.py .
+
+# Copy email templates
+COPY email-templates /email-templates
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/workspace
+ENV TEMPLATE_DIR=/email-templates
+
+# Default command runs tests from /tests directory
+CMD ["pytest", "/tests", "-v"]

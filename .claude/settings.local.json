@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m pytest test_budget_response_engine.py test_rule_engine.py test_config.py test_handler.py -v)",
+      "Bash(python -m pytest test_rule_engine.py test_budget_response_engine.py test_config.py -v --tb=short)",
+      "Bash(python3:*)",
+      "Bash(python -m pytest test_handler.py -v --tb=short)",
+      "Bash(python -m pytest test_rule_engine.py test_budget_response_engine.py test_config.py test_handler.py -v)",
+      "Bash(pytest:*)",
+      "Bash(python -m pytest -v)",
+      "Bash(tree:*)",
+      "Bash(python -m pytest tests/test_rule_engine.py -v)",
+      "Bash(python -m pytest tests/ -v --tb=short)",
+      "Bash(python -m pytest tests/ -v)",
+      "Bash(python -m pytest tests/test_budget_response_engine.py -v)",
+      "Bash(python -m black:*)",
+      "Bash(python -m isort:*)",
+      "Bash(python -m pytest tests/test_budget_response_engine.py -v --tb=short)",
+      "Bash(python -m pytest tests/test_config.py -v)",
+      "Bash(python -m pytest tests/test_budget_response_engine.py tests/test_project_discovery.py tests/test_config.py -v)",
+      "Bash(python -m pytest tests/test_project_discovery.py -v)",
+      "Bash(bash:*)",
+      "Bash(python -m pytest:*)",
+      "Bash(python:*)",
+      "Bash(cat:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

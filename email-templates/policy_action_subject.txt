@@ -1,0 +1,1 @@
+{% if success %}✅{% else %}❌{% endif %} GCP Policy Action: {{ action_type }} on {{ resource_type }}/{{ resource_id }}
