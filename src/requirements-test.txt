@@ -9,6 +9,6 @@ requests==2.32.3
 
 # Code quality and pre-commit hooks
 pre-commit==4.0.1
-black==24.10.0
+black==25.9.0
 isort==5.13.2
 pylint==3.3.2
