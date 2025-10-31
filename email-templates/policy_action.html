@@ -1,316 +1,216 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GCP Policy Action Event</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #1a1a1a;
-            background-color: #f5f7fa;
-            padding: 20px;
-        }
-        .email-container {
-            max-width: 600px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .header {
-            background: {% if success %}linear-gradient(135deg, #059669 0%, #10b981 100%);{% else %}linear-gradient(135deg, #dc2626 0%, #ef4444 100%);{% endif %}
-            color: white;
-            padding: 40px 30px;
-            text-align: center;
-        }
-        .header h1 {
-            font-size: 28px;
-            font-weight: 600;
-            margin-bottom: 10px;
-        }
-        .header .subtitle {
-            font-size: 14px;
-            opacity: 0.9;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        .status-badge {
-            display: inline-block;
-            padding: 8px 20px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-top: 10px;
-            background: rgba(255, 255, 255, 0.2);
-        }
-        .content {
-            padding: 40px 30px;
-        }
-        .status-banner {
-            background: {% if success %}#d1fae5;{% else %}#fee2e2;{% endif %}
-            border-left: 4px solid {% if success %}#10b981;{% else %}#ef4444;{% endif %}
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 30px;
-        }
-        .status-banner h2 {
-            color: {% if success %}#065f46;{% else %}#991b1b;{% endif %}
-            font-size: 20px;
-            margin-bottom: 10px;
-        }
-        .status-banner p {
-            color: {% if success %}#047857;{% else %}#b91c1c;{% endif %}
-            font-size: 14px;
-        }
-        .action-summary {
-            background: #f9fafb;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 30px;
-        }
-        .action-type-badge {
-            display: inline-block;
-            background: #3b82f6;
-            color: white;
-            padding: 6px 16px;
-            border-radius: 6px;
-            font-size: 13px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 15px;
-        }
-        .resource-info {
-            font-size: 16px;
-            color: #374151;
-            font-family: 'Courier New', monospace;
-        }
-        .section {
-            margin-bottom: 30px;
-        }
-        .section-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: #1e3a8a;
-            margin-bottom: 15px;
-            padding-bottom: 8px;
-            border-bottom: 2px solid #e5e7eb;
-        }
-        .info-grid {
-            display: grid;
-            gap: 15px;
-        }
-        .info-card {
-            background: #f9fafb;
-            padding: 15px;
-            border-radius: 8px;
-            border-left: 4px solid #3b82f6;
-        }
-        .info-label {
-            font-size: 12px;
-            text-transform: uppercase;
-            color: #6b7280;
-            letter-spacing: 0.5px;
-            margin-bottom: 5px;
-        }
-        .info-value {
-            font-size: 15px;
-            color: #1a1a1a;
-            font-family: 'Courier New', monospace;
-            word-break: break-all;
-        }
-        .details-box {
-            background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            padding: 20px;
-        }
-        .detail-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 12px 0;
-            border-bottom: 1px solid #f3f4f6;
-        }
-        .detail-item:last-child {
-            border-bottom: none;
-        }
-        .detail-label {
-            font-weight: 600;
-            color: #4b5563;
-            min-width: 140px;
-        }
-        .detail-value {
-            color: #1a1a1a;
-            text-align: right;
-            word-break: break-word;
-        }
-        .error-box {
-            background: #fee;
-            border: 2px solid #fcc;
-            border-radius: 8px;
-            padding: 20px;
-            margin-top: 20px;
-        }
-        .error-box h3 {
-            color: #991b1b;
-            font-size: 16px;
-            margin-bottom: 10px;
-        }
-        .error-box pre {
-            background: white;
-            padding: 15px;
-            border-radius: 6px;
-            overflow-x: auto;
-            color: #dc2626;
-            font-size: 13px;
-            line-height: 1.5;
-        }
-        .footer {
-            background: #f9fafb;
-            padding: 30px;
-            text-align: center;
-            border-top: 1px solid #e5e7eb;
-        }
-        .footer-text {
-            font-size: 12px;
-            color: #6b7280;
-            line-height: 1.8;
-        }
-        .footer-logo {
-            font-size: 14px;
-            color: #3b82f6;
-            font-weight: 600;
-            margin-bottom: 10px;
-        }
-        @media only screen and (max-width: 600px) {
-            .email-container {
-                border-radius: 0;
-            }
-            .detail-item {
-                flex-direction: column;
-            }
-            .detail-label {
-                margin-bottom: 5px;
-            }
-            .detail-value {
-                text-align: left;
-            }
-        }
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <!--[if mso]>
+    <style type="text/css">
+        body, table, td {font-family: Arial, Helvetica, sans-serif !important;}
     </style>
+    <![endif]-->
+    <title>GCP Policy Action Event</title>
 </head>
-<body>
-    <div class="email-container">
-        <div class="header">
-            <h1>{% if success %}✅ Policy Action Completed{% else %}❌ Policy Action Failed{% endif %}</h1>
-            <div class="subtitle">FinOps Sentinel Event Notification</div>
-            <div class="status-badge">{{ 'Success' if success else 'Failed' }}</div>
-        </div>
+<body style="margin: 0; padding: 0; background-color: #f5f7fa; font-family: 'Segoe UI', Arial, sans-serif;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f5f7fa;">
+        <tr>
+            <td align="center" style="padding: 20px 0;">
+                <!-- Main Container -->
+                <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="background-color: #ffffff; max-width: 600px;">
 
-        <div class="content">
-            <!-- Status Banner -->
-            <div class="status-banner">
-                <h2>{% if success %}Action Successfully Applied{% else %}Action Failed to Apply{% endif %}</h2>
-                <p>
-                    {% if success %}
-                    The policy enforcement action has been successfully applied to your GCP resources.
-                    {% else %}
-                    The policy enforcement action could not be applied. Please review the error details below.
+                    <!-- Header -->
+                    <tr>
+                        <td style="background-color: {% if success %}#059669{% else %}#dc2626{% endif %}; color: #ffffff; padding: 40px 30px; text-align: center;">
+                            <h1 style="margin: 0 0 10px 0; font-size: 28px; font-weight: 600; color: #ffffff;">
+                                {% if success %}✅ Policy Action Completed{% else %}❌ Policy Action Failed{% endif %}
+                            </h1>
+                            <div style="font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: #ffffff;">FinOps Sentinel Event Notification</div>
+                            <div style="display: inline-block; padding: 8px 20px; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-top: 10px; background-color: rgba(255, 255, 255, 0.2); color: #ffffff;">
+                                {{ 'Success' if success else 'Failed' }}
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Status Banner -->
+                    <tr>
+                        <td style="padding: 40px 30px 0 30px;">
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="20" border="0" style="background-color: {% if success %}#d1fae5{% else %}#fee2e2{% endif %}; border-left: 4px solid {% if success %}#10b981{% else %}#ef4444{% endif %};">
+                                <tr>
+                                    <td>
+                                        <h2 style="margin: 0 0 10px 0; font-size: 20px; font-weight: 600; color: {% if success %}#065f46{% else %}#991b1b{% endif %};">
+                                            {% if success %}Action Successfully Applied{% else %}Action Failed to Apply{% endif %}
+                                        </h2>
+                                        <p style="margin: 0; font-size: 14px; color: {% if success %}#047857{% else %}#b91c1c{% endif %};">
+                                            {% if success %}
+                                            The policy enforcement action has been successfully applied to your GCP resources.
+                                            {% else %}
+                                            The policy enforcement action could not be applied. Please review the error details below.
+                                            {% endif %}
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Action Summary -->
+                    <tr>
+                        <td style="padding: 30px 30px 0 30px;">
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="20" border="0" style="background-color: #f9fafb;">
+                                <tr>
+                                    <td>
+                                        <div style="background-color: #3b82f6; color: #ffffff; padding: 6px 16px; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 15px; display: inline-block;">
+                                            {{ action_type }}
+                                        </div>
+                                        <div style="font-size: 16px; color: #374151; font-family: 'Courier New', monospace;">
+                                            {{ resource_type }}/{% if details and details.display_name %}{{ details.display_name }} ({{ resource_id }}){% else %}{{ resource_id }}{% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Event Details Section -->
+                    <tr>
+                        <td style="padding: 30px 30px 0 30px;">
+                            <h3 style="margin: 0 0 15px 0; font-size: 18px; font-weight: 600; color: #1e3a8a; padding-bottom: 8px; border-bottom: 2px solid #e5e7eb;">Event Information</h3>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 0 30px;">
+                            <!-- Event Info Cards -->
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                                <!-- Timestamp -->
+                                <tr>
+                                    <td style="background-color: #f9fafb; padding: 15px; border-left: 4px solid #3b82f6; vertical-align: top;">
+                                        <div style="font-size: 12px; text-transform: uppercase; color: #6b7280; margin-bottom: 5px;">TIMESTAMP</div>
+                                        <div style="font-size: 15px; color: #1a1a1a; font-family: 'Courier New', monospace; word-break: break-all;">{{ timestamp }}</div>
+                                    </td>
+                                </tr>
+                                <tr><td height="15"></td></tr>
+                                <!-- Action Type -->
+                                <tr>
+                                    <td style="background-color: #f9fafb; padding: 15px; border-left: 4px solid #3b82f6; vertical-align: top;">
+                                        <div style="font-size: 12px; text-transform: uppercase; color: #6b7280; margin-bottom: 5px;">ACTION TYPE</div>
+                                        <div style="font-size: 15px; color: #1a1a1a; font-family: 'Courier New', monospace; word-break: break-all;">{{ action_type }}</div>
+                                    </td>
+                                </tr>
+                                <tr><td height="15"></td></tr>
+                                <!-- Resource Type -->
+                                <tr>
+                                    <td style="background-color: #f9fafb; padding: 15px; border-left: 4px solid #3b82f6; vertical-align: top;">
+                                        <div style="font-size: 12px; text-transform: uppercase; color: #6b7280; margin-bottom: 5px;">RESOURCE TYPE</div>
+                                        <div style="font-size: 15px; color: #1a1a1a; font-family: 'Courier New', monospace; word-break: break-all;">{{ resource_type }}</div>
+                                    </td>
+                                </tr>
+                                <tr><td height="15"></td></tr>
+                                <!-- Resource -->
+                                <tr>
+                                    <td style="background-color: #f9fafb; padding: 15px; border-left: 4px solid #3b82f6; vertical-align: top;">
+                                        <div style="font-size: 12px; text-transform: uppercase; color: #6b7280; margin-bottom: 5px;">RESOURCE</div>
+                                        <div style="font-size: 15px; color: #1a1a1a; font-family: 'Courier New', monospace; word-break: break-all;">
+                                            {% if details and details.display_name %}
+                                                {{ details.display_name }}<br><span style="font-size: 12px; color: #6b7280;">{{ resource_id }}</span>
+                                            {% else %}
+                                                {{ resource_id }}
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr><td height="15"></td></tr>
+                                <!-- Organization -->
+                                <tr>
+                                    <td style="background-color: #f9fafb; padding: 15px; border-left: 4px solid #3b82f6; vertical-align: top;">
+                                        <div style="font-size: 12px; text-transform: uppercase; color: #6b7280; margin-bottom: 5px;">ORGANIZATION</div>
+                                        <div style="font-size: 15px; color: #1a1a1a; font-family: 'Courier New', monospace; word-break: break-all;">{{ organization_id }}</div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Action Details -->
+                    {% if details %}
+                    <tr>
+                        <td style="padding: 30px 30px 0 30px;">
+                            <h3 style="margin: 0 0 15px 0; font-size: 18px; font-weight: 600; color: #1e3a8a; padding-bottom: 8px; border-bottom: 2px solid #e5e7eb;">Action Details</h3>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 0 30px;">
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="20" border="0" style="background-color: #ffffff; border: 1px solid #e5e7eb;">
+                                <tr>
+                                    <td>
+                                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                                            {% for key, value in details.items() %}
+                                            {% if value is not none and key != 'error' %}
+                                            <tr>
+                                                <td style="padding: 12px 0; border-bottom: 1px solid #f3f4f6;">
+                                                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                                                        <tr>
+                                                            <td style="font-weight: 600; color: #4b5563; min-width: 140px; vertical-align: top;">
+                                                                {{ key|title|replace('_', ' ') }}:
+                                                            </td>
+                                                            <td align="right" style="color: #1a1a1a; word-break: break-word;">
+                                                                {% if value is string %}
+                                                                    {{ value }}
+                                                                {% elif value is sequence and value is not string %}
+                                                                    {{ value|join(', ') }}
+                                                                {% else %}
+                                                                    {{ value }}
+                                                                {% endif %}
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                </td>
+                                            </tr>
+                                            {% endif %}
+                                            {% endfor %}
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
                     {% endif %}
-                </p>
-            </div>
 
-            <!-- Action Summary -->
-            <div class="action-summary">
-                <div class="action-type-badge">{{ action_type }}</div>
-                <div class="resource-info">
-                    {{ resource_type }}/{% if details and details.display_name %}{{ details.display_name }} ({{ resource_id }}){% else %}{{ resource_id }}{% endif %}
-                </div>
-            </div>
-
-            <!-- Event Details -->
-            <div class="section">
-                <h3 class="section-title">Event Information</h3>
-                <div class="info-grid">
-                    <div class="info-card">
-                        <div class="info-label">Timestamp</div>
-                        <div class="info-value">{{ timestamp }}</div>
-                    </div>
-                    <div class="info-card">
-                        <div class="info-label">Action Type</div>
-                        <div class="info-value">{{ action_type }}</div>
-                    </div>
-                    <div class="info-card">
-                        <div class="info-label">Resource Type</div>
-                        <div class="info-value">{{ resource_type }}</div>
-                    </div>
-                    <div class="info-card">
-                        <div class="info-label">Resource</div>
-                        <div class="info-value">
-                            {% if details and details.display_name %}
-                                {{ details.display_name }}<br><span style="font-size: 12px; color: #6b7280;">{{ resource_id }}</span>
-                            {% else %}
-                                {{ resource_id }}
-                            {% endif %}
-                        </div>
-                    </div>
-                    <div class="info-card">
-                        <div class="info-label">Organization</div>
-                        <div class="info-value">{{ organization_id }}</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Action Details -->
-            {% if details %}
-            <div class="section">
-                <h3 class="section-title">Action Details</h3>
-                <div class="details-box">
-                    {% for key, value in details.items() %}
-                    {% if value is not none and key != 'error' %}
-                    <div class="detail-item">
-                        <span class="detail-label">{{ key|title|replace('_', ' ') }}:</span>
-                        <span class="detail-value">
-                            {% if value is string %}
-                                {{ value }}
-                            {% elif value is sequence and value is not string %}
-                                {{ value|join(', ') }}
-                            {% else %}
-                                {{ value }}
-                            {% endif %}
-                        </span>
-                    </div>
+                    <!-- Error Details -->
+                    {% if details and details.error %}
+                    <tr>
+                        <td style="padding: 20px 30px;">
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="20" border="0" style="background-color: #fee; border: 2px solid #fcc;">
+                                <tr>
+                                    <td>
+                                        <h3 style="margin: 0 0 10px 0; color: #991b1b; font-size: 16px;">⚠️ Error Details</h3>
+                                        <table role="presentation" width="100%" cellspacing="0" cellpadding="15" border="0" style="background-color: #ffffff;">
+                                            <tr>
+                                                <td style="color: #dc2626; font-size: 13px; line-height: 1.5; font-family: 'Courier New', monospace; word-break: break-word;">
+                                                    {{ details.error }}
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
                     {% endif %}
-                    {% endfor %}
-                </div>
-            </div>
-            {% endif %}
 
-            <!-- Error Details -->
-            {% if details and details.error %}
-            <div class="error-box">
-                <h3>⚠️ Error Details</h3>
-                <pre>{{ details.error }}</pre>
-            </div>
-            {% endif %}
-        </div>
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #f9fafb; padding: 30px; text-align: center; border-top: 1px solid #e5e7eb;">
+                            <div style="font-size: 14px; color: #3b82f6; font-weight: 600; margin-bottom: 10px;">GCP FinOps Sentinel</div>
+                            <div style="font-size: 12px; color: #6b7280; line-height: 1.8;">
+                                This is an automated notification from your GCP policy enforcement system.<br>
+                                Event tracking helps maintain audit compliance and operational visibility.
+                            </div>
+                        </td>
+                    </tr>
 
-        <div class="footer">
-            <div class="footer-logo">GCP FinOps Sentinel</div>
-            <div class="footer-text">
-                This is an automated notification from your GCP policy enforcement system.<br>
-                Event tracking helps maintain audit compliance and operational visibility.
-            </div>
-        </div>
-    </div>
+                </table>
+            </td>
+        </tr>
+    </table>
 </body>
 </html>

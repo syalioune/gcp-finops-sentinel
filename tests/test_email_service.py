@@ -161,8 +161,8 @@ class TestEmailTemplates:
         # Subject line format from external template
         assert "150.0%" in subject
         assert "Budget Alert" in subject
-        assert "$1500.00" in html_body
-        assert "$1000.00" in html_body
+        assert "€1500.00" in html_body
+        assert "€1000.00" in html_body
         assert "150.0%" in html_body
         assert "012345-ABCDEF-123456" in html_body
 
