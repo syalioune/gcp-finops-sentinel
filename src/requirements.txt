@@ -2,6 +2,8 @@
 # Last updated: 2025-01-12 for Python 3.13
 
 functions-framework==3.9.2
+google-cloud-billing==1.14.1
+google-cloud-billing-budgets==1.17.1
 google-cloud-org-policy==1.14.0
 google-cloud-pubsub==2.31.1
 google-cloud-resource-manager==1.13.1

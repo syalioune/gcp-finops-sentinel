@@ -114,6 +114,7 @@ docker run -p 8080:8080 \
 
 4. **ProjectDiscovery** ([src/project_discovery.py](src/project_discovery.py))
    - Discovers projects based on label filters using Resource Manager API v3
+   - **Returns display names**: Each project includes both `project_id` and `display_name` for improved readability
    - **Fixed**: Correct query syntax `labels.key:value` (colon per API docs)
    - **Fixed**: Correct organization parent format `parent:organizations/ORG_ID`
    - **Fixed**: Post-filters results for AND logic (API uses OR for multiple labels)
@@ -134,6 +135,7 @@ docker run -p 8080:8080 \
 6. **budget_response_handler** ([src/handler.py](src/handler.py))
    - Cloud Run entry point (CloudEvent trigger via Eventarc)
    - Decodes Pub/Sub messages containing budget alert data
+   - **Fetches human-readable names**: Retrieves display names for billing accounts, budgets, and projects
    - Resolves action targets (projects, folders, organization, label-based discovery)
    - Orchestrates rule evaluation and action execution
    - Comprehensive error handling and logging
@@ -241,17 +243,21 @@ When `ACTION_EVENT_TOPIC` is configured, the service publishes structured event 
 {
   "timestamp": 1234567890.123,
   "action_type": "restrict_services",
-  "project_id": "my-project-123",
+  "resource_id": "my-project-123",
+  "resource_type": "project",
   "success": true,
   "organization_id": "123456789012",
   "details": {
     "constraint": "gcp.restrictServiceUsage",
     "action": "deny",
     "services": ["compute.googleapis.com"],
+    "display_name": "My Production Project",
     "error": null
   }
 }
 ```
+
+**Display Names**: Policy action events now include human-readable `display_name` in the details for improved observability and reporting.
 
 **Event Types**:
 - `restrict_services`: Service restriction applied
@@ -329,10 +335,16 @@ The service supports sending HTML email notifications for budget alerts using co
 **Email Template Variables**:
 Budget alert template receives:
 - `cost_amount`, `budget_amount`, `threshold_percent`
-- `billing_account_id`, `budget_id`
+- `billing_account_id`, `billing_account_name` (human-readable name)
+- `budget_id`, `budget_name` (human-readable name)
 - `organization_id`
-- `actions` (list of automated actions taken)
+- `actions` (list of automated actions taken, includes `display_name` for projects)
 - `custom_message` (optional custom message)
+
+**Display Names in Emails**: Email templates automatically show human-readable names with IDs in smaller text for better readability:
+- Billing Account: "Production Account" (012345-6789AB-CDEF01)
+- Budget: "2025 Q1 Budget" (budget-uuid)
+- Project Actions: "My Project (my-project-123)"
 
 **Email Templates**:
 All email templates are stored externally in [email-templates/](email-templates/):

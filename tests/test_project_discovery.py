@@ -38,11 +38,19 @@ class TestProjectDiscovery(unittest.TestCase):
         label_filters = {"env": "prod", "team": "backend"}
         projects = discovery.find_projects_by_labels(label_filters, self.organization_id)
 
-        # Should return mock project IDs
+        # Should return mock project data
         self.assertIsInstance(projects, list)
         self.assertEqual(len(projects), 2)
-        self.assertIn("mock-project-env-prod", projects)
-        self.assertIn("mock-project-team-backend", projects)
+
+        # Verify return format is list of dicts with project_id and display_name
+        project_ids = [p["project_id"] for p in projects]
+        self.assertIn("mock-project-env-prod", project_ids)
+        self.assertIn("mock-project-team-backend", project_ids)
+
+        # Verify display names are present
+        for project in projects:
+            self.assertIn("display_name", project)
+            self.assertIsNotNone(project["display_name"])
 
     @patch("project_discovery.ProjectsClient")
     def test_find_projects_by_labels_real_mode(self, mock_client_class):
@@ -70,10 +78,15 @@ class TestProjectDiscovery(unittest.TestCase):
         # Verify the search was called
         self.assertTrue(mock_client.search_projects.called)
 
-        # Verify returned project IDs
+        # Verify returned project data
         self.assertEqual(len(projects), 2)
-        self.assertIn("prod-web-1", projects)
-        self.assertIn("prod-api-1", projects)
+        project_ids = [p["project_id"] for p in projects]
+        self.assertIn("prod-web-1", project_ids)
+        self.assertIn("prod-api-1", project_ids)
+
+        # Verify display names are present
+        for project in projects:
+            self.assertIn("display_name", project)
 
     @patch("project_discovery.ProjectsClient")
     def test_find_projects_by_multiple_labels(self, mock_client_class):
@@ -102,9 +115,10 @@ class TestProjectDiscovery(unittest.TestCase):
         # Verify the search was called
         self.assertTrue(mock_client.search_projects.called)
 
-        # Verify returned project ID
+        # Verify returned project data
         self.assertEqual(len(projects), 1)
-        self.assertEqual(projects[0], "prod-backend-api")
+        self.assertEqual(projects[0]["project_id"], "prod-backend-api")
+        self.assertIn("display_name", projects[0])
 
     @patch("project_discovery.ProjectsClient")
     def test_find_projects_without_organization_filter(self, mock_client_class):
@@ -129,9 +143,10 @@ class TestProjectDiscovery(unittest.TestCase):
         # Verify the search was called
         self.assertTrue(mock_client.search_projects.called)
 
-        # Verify returned project ID
+        # Verify returned project data
         self.assertEqual(len(projects), 1)
-        self.assertEqual(projects[0], "test-project")
+        self.assertEqual(projects[0]["project_id"], "test-project")
+        self.assertIn("display_name", projects[0])
 
     @patch("project_discovery.ProjectsClient")
     def test_find_projects_error_handling(self, mock_client_class):

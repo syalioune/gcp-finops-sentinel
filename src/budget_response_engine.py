@@ -176,6 +176,7 @@ class BudgetResponseEngine:
         services: List[str],
         action: str = "deny",
         resource_type: str = "project",
+        display_name: Optional[str] = None,
     ) -> bool:
         """
         Apply service restriction policy to a resource (project, folder, or organization).
@@ -185,6 +186,7 @@ class BudgetResponseEngine:
             services: List of service names to restrict (e.g., 'compute.googleapis.com')
             action: 'deny' to disable services, 'allow' to enable services
             resource_type: Type of resource ('project', 'folder', or 'organization')
+            display_name: Optional human-readable name for the resource
 
         Returns:
             bool: True if successful, False otherwise
@@ -239,17 +241,21 @@ class BudgetResponseEngine:
             )
 
         # Publish action event
+        event_details = {
+            "constraint": constraint,
+            "action": action,
+            "services": services,
+            "error": error_message,
+        }
+        if display_name:
+            event_details["display_name"] = display_name
+
         self.publish_action_event(
             action_type="restrict_services",
             resource_id=resource_id,
             resource_type=resource_type,
             success=success,
-            details={
-                "constraint": constraint,
-                "action": action,
-                "services": services,
-                "error": error_message,
-            },
+            details=event_details,
         )
 
         return success
@@ -261,6 +267,7 @@ class BudgetResponseEngine:
         enforce: bool = True,
         values: Optional[List[str]] = None,
         resource_type: str = "project",
+        display_name: Optional[str] = None,
     ) -> bool:
         """
         Apply a custom organization policy constraint.
@@ -271,6 +278,7 @@ class BudgetResponseEngine:
             enforce: Whether to enforce the constraint
             values: Optional list of values for list constraints
             resource_type: Type of resource ('project', 'folder', or 'organization')
+            display_name: Optional human-readable name for the resource
 
         Returns:
             bool: True if successful, False otherwise
@@ -332,17 +340,21 @@ class BudgetResponseEngine:
             )
 
         # Publish action event
+        event_details = {
+            "constraint": constraint,
+            "enforce": enforce,
+            "values": values,
+            "error": error_message,
+        }
+        if display_name:
+            event_details["display_name"] = display_name
+
         self.publish_action_event(
             action_type="apply_constraint",
             resource_id=resource_id,
             resource_type=resource_type,
             success=success,
-            details={
-                "constraint": constraint,
-                "enforce": enforce,
-                "values": values,
-                "error": error_message,
-            },
+            details=event_details,
         )
 
         return success

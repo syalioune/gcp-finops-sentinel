@@ -22,7 +22,8 @@
       "Bash(bash:*)",
       "Bash(python -m pytest:*)",
       "Bash(python:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(pip install:*)"
     ],
     "deny": [],
     "ask": []
