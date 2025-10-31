@@ -103,9 +103,7 @@ def _resolve_action_targets(action, project_discovery, organization_id):
     # Add projects discovered by labels
     if "target_labels" in action:
         label_filters = action["target_labels"]
-        discovered_projects = project_discovery.find_projects_by_labels(
-            label_filters, organization_id
-        )
+        discovered_projects = project_discovery.find_projects_by_labels(label_filters)
         for project_info in discovered_projects:
             # project_info is a dict with project_id and display_name
             targets.append(
