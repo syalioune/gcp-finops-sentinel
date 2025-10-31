@@ -32,7 +32,7 @@ class ProjectDiscovery:
 
     def find_projects_by_labels(
         self, label_filters: Dict[str, str], organization_id: Optional[str] = None
-    ) -> List[str]:
+    ) -> List[Dict[str, str]]:
         """
         Find projects matching the given label filters.
 
@@ -42,17 +42,24 @@ class ProjectDiscovery:
             organization_id: Optional organization ID to scope search
 
         Returns:
-            List of project IDs matching the filters
+            List of dictionaries with project_id and display_name keys
+            Example: [{"project_id": "my-project-123", "display_name": "My Project"}]
         """
         if self.dry_run:
-            # Return mock project IDs for testing
+            # Return mock project data for testing
             logger.info(
                 "DRY-RUN: Would search for projects with labels %s in organization %s",
                 label_filters,
                 organization_id,
             )
-            # Generate mock project IDs based on labels
-            mock_projects = [f"mock-project-{key}-{value}" for key, value in label_filters.items()]
+            # Generate mock project data based on labels
+            mock_projects = [
+                {
+                    "project_id": f"mock-project-{key}-{value}",
+                    "display_name": f"Mock Project {key.title()} {value.title()}",
+                }
+                for key, value in label_filters.items()
+            ]
             logger.info("DRY-RUN: Found mock projects: %s", mock_projects)
             return mock_projects
 
@@ -90,9 +97,9 @@ class ProjectDiscovery:
             request = SearchProjectsRequest(query=query)
             projects = self.projects_client.search_projects(request=request)
 
-            # Extract project IDs and filter to match ALL labels (AND logic)
+            # Extract project data and filter to match ALL labels (AND logic)
             # The API uses OR logic for multiple labels, so we need to post-filter
-            project_ids = []
+            project_data = []
             for project in projects:
                 # Check if project has all required labels with matching values
                 if hasattr(project, "labels"):
@@ -106,11 +113,16 @@ class ProjectDiscovery:
                     if all_labels_match:
                         # Extract project ID from project name (format: projects/PROJECT_ID)
                         project_id = project.name.split("/")[-1]
-                        project_ids.append(project_id)
+                        display_name = (
+                            project.display_name if hasattr(project, "display_name") else project_id
+                        )
+                        project_data.append(
+                            {"project_id": project_id, "display_name": display_name}
+                        )
                         logger.debug(
                             "Matched project: %s (name: %s, labels: %s)",
                             project_id,
-                            project.display_name if hasattr(project, "display_name") else "N/A",
+                            display_name,
                             project_labels,
                         )
                     else:
@@ -125,11 +137,11 @@ class ProjectDiscovery:
 
             logger.info(
                 "Found %d projects matching ALL labels %s: %s",
-                len(project_ids),
+                len(project_data),
                 label_filters,
-                project_ids,
+                [p["project_id"] for p in project_data],
             )
-            return project_ids
+            return project_data
 
         except Exception as e:
             logger.error(

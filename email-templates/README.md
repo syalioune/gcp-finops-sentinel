@@ -23,7 +23,9 @@ Available in `budget_alert.html`:
 {{ budget_amount }}         # Budget amount (float)
 {{ threshold_percent }}     # Threshold percentage (float)
 {{ billing_account_id }}    # Billing account ID (string)
+{{ billing_account_name }}  # Billing account display name (string)
 {{ budget_id }}             # Budget ID (string)
+{{ budget_name }}           # Budget display name (string)
 {{ organization_id }}       # Organization ID (string)
 {{ custom_message }}        # Optional custom message (string or None)
 {{ actions }}               # List of automated actions taken
@@ -36,10 +38,13 @@ Actions list structure:
         "type": "restrict_services",
         "resource_id": "my-project",
         "resource_type": "project",
-        "details": "Restricted services: compute.googleapis.com"
+        "display_name": "My Production Project",
+        "details": "Restricted services on My Production Project (my-project): compute.googleapis.com"
     }
 ]
 ```
+
+**Display Names**: Templates automatically show human-readable names alongside IDs for better readability. Display names are fetched from GCP APIs for billing accounts, budgets, and projects discovered via labels.
 
 ### Policy Action Template Variables
 
@@ -60,6 +65,7 @@ Details dictionary may contain:
 - `services` - List of services affected
 - `enforce` - Boolean constraint enforcement
 - `values` - List of constraint values
+- `display_name` - Human-readable name for the resource
 - `error` - Error message (if failed)
 
 ## Using Custom Templates

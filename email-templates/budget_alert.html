@@ -251,11 +251,23 @@
                 <div class="info-list">
                     <div class="info-item">
                         <span class="info-label">Billing Account:</span>
-                        <span class="info-value">{{ billing_account_id }}</span>
+                        <span class="info-value">
+                            {% if billing_account_name and billing_account_name != billing_account_id %}
+                                {{ billing_account_name }}<br><span style="font-size: 12px; color: #6b7280;">{{ billing_account_id }}</span>
+                            {% else %}
+                                {{ billing_account_id }}
+                            {% endif %}
+                        </span>
                     </div>
                     <div class="info-item">
-                        <span class="info-label">Budget ID:</span>
-                        <span class="info-value">{{ budget_id }}</span>
+                        <span class="info-label">Budget:</span>
+                        <span class="info-value">
+                            {% if budget_name and budget_name != budget_id %}
+                                {{ budget_name }}<br><span style="font-size: 12px; color: #6b7280;">{{ budget_id }}</span>
+                            {% else %}
+                                {{ budget_id }}
+                            {% endif %}
+                        </span>
                     </div>
                     <div class="info-item">
                         <span class="info-label">Organization:</span>
@@ -285,7 +297,7 @@
                         <div class="action-type">{{ action.type }}</div>
                         {% if action.resource_id %}
                         <div class="action-target">
-                            Target: {{ action.resource_type }}/{{ action.resource_id }}
+                            Target: {{ action.resource_type }}/{% if action.display_name %}{{ action.display_name }} ({{ action.resource_id }}){% else %}{{ action.resource_id }}{% endif %}
                         </div>
                         {% endif %}
                         {% if action.details %}
